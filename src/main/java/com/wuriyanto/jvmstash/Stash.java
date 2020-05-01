@@ -41,9 +41,11 @@ public class Stash extends OutputStream {
 
     public void connect() throws StashException {
         try {
-            this.socket = new Socket(this.builder.host, this.builder.port);
+            if (!this.builder.secure) {
+                this.socket = new Socket(this.builder.host, this.builder.port);
 
-            if (this.builder.secure) {
+            } else {
+
                 LOGGER.log(Level.INFO, "connection secure");
 
                 KeyStore ks = KeyStore.getInstance("PKCS12");
@@ -51,7 +53,7 @@ public class Stash extends OutputStream {
                 ks.load(keyIn, this.builder.keyStorePassword.toCharArray());
 
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-                ks.load(keyIn, this.builder.keyStorePassword.toCharArray());
+                kmf.init(ks, this.builder.keyStorePassword.toCharArray());
 
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
                 tmf.init(ks);
@@ -65,12 +67,12 @@ public class Stash extends OutputStream {
 
                 // start handshake
                 sslSocket.startHandshake();
-                this.socket = sslSocket;
+
                 // replace socket with sslsocket
+                this.socket = sslSocket;
 
             }
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "1");
             LOGGER.log(Level.WARNING, e.getMessage());
             throw new StashException(e.getMessage());
         } catch (CertificateException e) {
@@ -85,6 +87,9 @@ public class Stash extends OutputStream {
         } catch (KeyManagementException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             throw new StashException("key management error " + e.getMessage());
+        } catch (UnrecoverableKeyException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+            throw new StashException("unrecoverable key error " + e.getMessage());
         }
 
         try {
@@ -136,7 +141,10 @@ public class Stash extends OutputStream {
         private String keyStorePassword;
 
         public Builder() {
+            // default host
             this.host = "localhost";
+
+            // logstash default port
             this.port = 5000;
         }
 
