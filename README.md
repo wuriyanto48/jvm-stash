@@ -1,4 +1,4 @@
-### JVM Stash
+## JVM Stash
 Logstash Client for Java Virtual Machine
 
 >##### Note (If you use TLS)
@@ -8,9 +8,9 @@ Logstash Client for Java Virtual Machine
 $ openssl pkcs12 -export -inkey your_server.key -in your_server.crt -out server.p12
 ```
 
-#### Usage
+### Usage
 
-Basic
+#### Basic
 ```java
 Stash stash = new Stash.Builder()
                 .setHost("localhost")
@@ -34,7 +34,7 @@ try {
 }
 ```
 
-TLS Connection
+#### TLS Connection
 
 Assumed you already enable `ssl` config inside `logstash.conf`
 ```config
