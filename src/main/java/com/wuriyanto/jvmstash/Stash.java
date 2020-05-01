@@ -1,7 +1,11 @@
 package com.wuriyanto.jvmstash;
 
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
@@ -37,15 +41,56 @@ public class Stash extends OutputStream {
 
     public void connect() throws StashException {
         try {
-            socket = new Socket(builder.host, builder.port);
+            this.socket = new Socket(this.builder.host, this.builder.port);
+
+            if (this.builder.secure) {
+                LOGGER.log(Level.INFO, "connection secure");
+
+                KeyStore ks = KeyStore.getInstance("PKCS12");
+                InputStream keyIn = this.builder.keyStoreIs;
+                ks.load(keyIn, this.builder.keyStorePassword.toCharArray());
+
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+                ks.load(keyIn, this.builder.keyStorePassword.toCharArray());
+
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+                tmf.init(ks);
+
+                // Create a SSLSocketFactory that allows for self signed certs
+                SSLContext ctx = SSLContext.getInstance("TLS");
+                ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+                SSLSocketFactory ssf = ctx.getSocketFactory();
+                SSLSocket sslSocket = (SSLSocket) ssf.createSocket(this.builder.host, this.builder.port);
+
+                // start handshake
+                sslSocket.startHandshake();
+                this.socket = sslSocket;
+                // replace socket with sslsocket
+
+            }
         } catch (IOException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
             throw new StashException(e.getMessage());
+        } catch (CertificateException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+            throw new StashException("certificate error " + e.getMessage());
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+            throw new StashException("algorithm error " + e.getMessage());
+        } catch (KeyStoreException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+            throw new StashException("keystore error " + e.getMessage());
+        } catch (KeyManagementException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
+            throw new StashException("key management error " + e.getMessage());
         }
 
         try {
             this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
+            LOGGER.log(Level.WARNING, e.getMessage());
             throw new StashException(e.getMessage());
         }
     }
