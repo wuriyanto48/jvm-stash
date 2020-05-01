@@ -17,19 +17,19 @@ public class Stash extends OutputStream {
 
     private static final Logger LOGGER = Logger.getLogger(Stash.class.getName());
 
-    // represent Carriage Return and Line Feed in ASCII code
+    // CRLF represent Carriage Return and Line Feed in ASCII code
     private static final byte[] CRLF = new byte[]{13, 10};
 
-    // represent socket client
+    // socket represent socket client
     private Socket socket;
 
-    // represent io writer
-    private BufferedWriter writer;
+    // writer represent io writer
+    private DataOutputStream writer;
 
-    // represent io reader
+    // reader represent io reader
     // not yet useful right now,
-    // but in future maybe we need read the reply from server
-    private BufferedReader reader;
+    // but in the future maybe we need read the reply from server
+    private DataInputStream reader;
 
     private Boolean closed;
     private Builder builder;
@@ -70,6 +70,7 @@ public class Stash extends OutputStream {
 
             }
         } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "1");
             LOGGER.log(Level.WARNING, e.getMessage());
             throw new StashException(e.getMessage());
         } catch (CertificateException e) {
@@ -87,8 +88,10 @@ public class Stash extends OutputStream {
         }
 
         try {
-            this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            LOGGER.log(Level.INFO, "logstash connected");
+
+            this.writer = new DataOutputStream(socket.getOutputStream());
+            this.reader = new DataInputStream(socket.getInputStream());
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, e.getMessage());
             throw new StashException(e.getMessage());
@@ -97,12 +100,24 @@ public class Stash extends OutputStream {
 
     @Override
     public void write(int b) throws IOException {
+        if (socket.isConnected()) {
+            this.writer.write(b);
+            this.writer.write(CRLF);
 
+            //buffer might be full so flush now
+            this.writer.flush();
+        }
     }
 
     @Override
     public void write(byte[] b) throws IOException {
-        //super.write(b);
+        if (socket.isConnected()) {
+            this.writer.write(b);
+            this.writer.write(CRLF);
+
+            //buffer might be full so flush now
+            this.writer.flush();
+        }
     }
 
     @Override
@@ -119,6 +134,11 @@ public class Stash extends OutputStream {
         private Boolean secure;
         private InputStream keyStoreIs;
         private String keyStorePassword;
+
+        public Builder() {
+            this.host = "localhost";
+            this.port = 5000;
+        }
 
         public Builder setHost(String host) {
             this.host = host;
