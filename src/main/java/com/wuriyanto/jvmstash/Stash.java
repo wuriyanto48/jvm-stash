@@ -127,10 +127,12 @@ public class Stash extends OutputStream {
 
     @Override
     public void close() throws IOException {
-        this.socket.close();
-        this.writer.close();
-        this.reader.close();
-        //super.close();
+        if (!this.socket.isClosed()) {
+            this.socket.close();
+            this.writer.close();
+            this.reader.close();
+            //super.close();
+        }
     }
 
     public static class Builder {
