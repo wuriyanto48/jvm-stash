@@ -1,20 +1,16 @@
 package com.wuriyanto.jvmstash.example;
 
-import com.wuriyanto.jvmstash.JsonUtil;
 import com.wuriyanto.jvmstash.Stash;
 import com.wuriyanto.jvmstash.StashException;
+import com.wuriyanto.jvmstash.StashLogHandler;
 
 import java.io.*;
-import java.util.Date;
-import java.util.UUID;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/**
- * example using jvm-stash
- */
-public class App {
+public class AppLogger {
 
-    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AppLogger.class.getName());
 
     public static void main(String[] args) {
 
@@ -42,23 +38,20 @@ public class App {
             System.exit(1);
         }
 
+        // Set Handler with StashLogHandler
+        LOGGER.addHandler(new StashLogHandler(stash));
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        while(true) {
+        while (true) {
             try {
                 String action = reader.readLine();
                 if (action.equals("exit")) {
                     break;
                 }
 
-                Event event = new Event();
-                event.setId(UUID.randomUUID().toString());
-                event.setActionName(action);
-                event.setEndpoint("http://my.dev/"+action);
-                event.setTime(new Date());
-                String json = JsonUtil.dataToJson(event);
-
-                stash.write(json.getBytes());
+                // Use standar log that uses StashLogHandler
+                LOGGER.log(Level.INFO, action);
 
             } catch (IOException e) {
                 System.out.println(e.getMessage());
@@ -73,46 +66,4 @@ public class App {
             System.exit(1);
         }
     }
-
-    static class Event {
-
-        private String id;
-        private String actionName;
-        private String endpoint;
-        private Date time;
-
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getActionName() {
-            return actionName;
-        }
-
-        public void setActionName(String actionName) {
-            this.actionName = actionName;
-        }
-
-        public String getEndpoint() {
-            return endpoint;
-        }
-
-        public void setEndpoint(String endpoint) {
-            this.endpoint = endpoint;
-        }
-
-        public Date getTime() {
-            return time;
-        }
-
-        public void setTime(Date time) {
-            this.time = time;
-        }
-    }
-
 }
