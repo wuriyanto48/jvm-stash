@@ -2,7 +2,9 @@ package com.wuriyanto.jvmstash;
 
 import javax.net.ssl.*;
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.logging.Level;
@@ -16,9 +18,6 @@ import java.util.logging.Logger;
 public class Stash extends OutputStream {
 
     private static final Logger LOGGER = Logger.getLogger(Stash.class.getName());
-
-    // CRLF represent Carriage Return and Line Feed in ASCII code
-    private static final byte[] CRLF = new byte[]{13, 10};
 
     // socket represent socket client
     private Socket socket;
@@ -41,10 +40,17 @@ public class Stash extends OutputStream {
 
     public void connect() throws StashException {
         try {
-            if (!this.builder.secure) {
-                this.socket = new Socket(this.builder.host, this.builder.port);
+            this.socket = new Socket();
+            this.socket.setKeepAlive(true);
+            this.socket.setTcpNoDelay(true);
 
-            } else {
+            SocketAddress socketAddress = new InetSocketAddress(this.builder.host, this.builder.port);
+
+            this.socket.connect(socketAddress, this.builder.connectionTimeout);
+            this.socket.setSoTimeout(this.builder.readTimeout);
+
+
+            if (this.builder.secure) {
 
                 LOGGER.log(Level.INFO, "connection secure");
 
@@ -63,7 +69,7 @@ public class Stash extends OutputStream {
                 ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
                 SSLSocketFactory ssf = ctx.getSocketFactory();
-                SSLSocket sslSocket = (SSLSocket) ssf.createSocket(this.builder.host, this.builder.port);
+                SSLSocket sslSocket = (SSLSocket) ssf.createSocket(socket, this.builder.host, this.builder.port, true);
 
                 // start handshake
                 sslSocket.startHandshake();
@@ -107,7 +113,7 @@ public class Stash extends OutputStream {
     public void write(int b) throws IOException {
         if (socket.isConnected()) {
             this.writer.write(b);
-            this.writer.write(CRLF);
+            this.writer.write(Constant.CRLF);
 
             //buffer might be full so flush now
             this.writer.flush();
@@ -118,21 +124,31 @@ public class Stash extends OutputStream {
     public void write(byte[] b) throws IOException {
         if (socket.isConnected()) {
             this.writer.write(b);
-            this.writer.write(CRLF);
+            this.writer.write(Constant.CRLF);
 
             //buffer might be full so flush now
             this.writer.flush();
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        if (!this.socket.isClosed()) {
+    public void disconnect() throws IOException {
+        if (isConnected()) {
+            LOGGER.log(Level.INFO, "logstash disconnected");
             this.socket.close();
             this.writer.close();
             this.reader.close();
             //super.close();
         }
+    }
+
+    public boolean isConnected() {
+        return this.socket != null && this.socket.isBound() && !this.socket.isClosed() && this.socket.isConnected()
+                && !this.socket.isInputShutdown() && !this.socket.isOutputShutdown();
+    }
+
+    @Override
+    public void close() throws IOException {
+        disconnect();
     }
 
     public static class Builder {
@@ -141,13 +157,21 @@ public class Stash extends OutputStream {
         private Boolean secure;
         private InputStream keyStoreIs;
         private String keyStorePassword;
+        private Integer connectionTimeout;
+        private Integer readTimeout;
 
         public Builder() {
             // default host
-            this.host = "localhost";
+            this.host = Constant.DEFAULT_HOST;
 
             // logstash default port
-            this.port = 5000;
+            this.port = Constant.DEFAULT_PORT;
+
+            // connection timeout when trying to connect to logstash server
+            this.connectionTimeout = Constant.DEFAULT_TIMEOUT;
+
+            // connection timeout when trying to read from logstash server
+            this.readTimeout = Constant.DEFAULT_TIMEOUT;
         }
 
         public Builder setHost(String host) {
@@ -172,6 +196,16 @@ public class Stash extends OutputStream {
 
         public Builder setKeyStorePassword(String keyStorePassword) {
             this.keyStorePassword = keyStorePassword;
+            return this;
+        }
+
+        public Builder setConnectionTimeout(Integer connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
+            return this;
+        }
+
+        public Builder setReadTimeout(Integer readTimeout) {
+            this.readTimeout = readTimeout;
             return this;
         }
 
