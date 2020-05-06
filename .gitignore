@@ -3,3 +3,12 @@
 target/
 
 jvm-stash.iml
+
+ops/
+
+*.crt
+*.key
+*.p12
+
+.env
+*.yml
