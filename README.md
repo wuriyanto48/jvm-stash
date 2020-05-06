@@ -85,3 +85,47 @@ try {
     System.exit(1);
 }
 ```
+
+#### With Java's standar logging
+```java
+private static final Logger LOGGER = Logger.getLogger(AppLogger.class.getName());
+
+public static void main(String[] args) throws StashException {
+        InputStream keyStore = null;
+        
+        try {
+            keyStore = new FileInputStream("/path/to/your/server.p12");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+        
+        Stash stash = new Stash.Builder()
+                        .setHost("localhost")
+                        .setPort(5000)
+                        // makesure set to true
+                        .setSecure(true)
+                        .setKeyStoreIs(keyStore)
+                        .setKeyStorePassword("damn12345")
+                        .build();
+        
+        try {
+            stash.connect();
+        } catch (StashException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+        
+        // Set Handler with StashLogHandler
+        LOGGER.addHandler(new StashLogHandler(stash));
+        
+        // Use standar log that uses StashLogHandler
+        LOGGER.log(Level.INFO, "hello");
+        
+        try {
+            stash.close();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
+```
