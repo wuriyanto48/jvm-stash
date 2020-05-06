@@ -12,7 +12,7 @@ public class AppLogger {
 
     private static final Logger LOGGER = Logger.getLogger(AppLogger.class.getName());
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws StashException {
 
         InputStream keyStore = null;
 

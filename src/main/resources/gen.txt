@@ -1,0 +1,14 @@
+create private key
+$ openssl genrsa -out server.key 2048
+
+create certificate
+openssl req -new -x509 -key server.key -out server.crt -days 3650 -subj /CN=musobarmedia.dev
+
+Import the cert.crt certificates into Java keystores:
+$ keytool -importcert -trustcacerts -keystore  servertruststore.jks -storetype jks -file server.crt
+
+Combine the keys and certificates into PKCS12 keystores:
+$ openssl pkcs12 -export -inkey server.key -in server.crt -out server.p12
+
+
+pass: damn12345
