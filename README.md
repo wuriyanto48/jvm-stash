@@ -129,3 +129,6 @@ public static void main(String[] args) throws StashException {
             System.exit(1);
         }
 ```
+
+#### Spring Boot Integration
+https://github.com/wuriyanto48/spring-boot-starter-jvmstash
