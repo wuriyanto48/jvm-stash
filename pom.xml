@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.wuriyanto</groupId>
     <artifactId>jvm-stash</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>jvm-stash</name>
     <url>http://maven.apache.org</url>
 
@@ -21,7 +20,8 @@
         <connection>scm:git:git://git@github.com/wuriyanto48/jvm-stash.git</connection>
         <developerConnection>scm:git:git@github.com:wuriyanto48/jvm-stash.git</developerConnection>
         <url>https://github.com/wuriyanto48/jvm-stash/tree/master</url>
-    </scm>
+      <tag>jvm-stash-1.0</tag>
+  </scm>
 
     <properties>
         <!-- https://maven.apache.org/general.html#encoding-warning -->
@@ -195,6 +195,29 @@
                             </execution>
                         </executions>
                     </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.10.4</version>
+                        <configuration>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </plugin>
+
                 </plugins>
             </build>
         </profile>
