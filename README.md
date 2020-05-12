@@ -8,6 +8,15 @@ Logstash Client for Java Virtual Machine
 $ openssl pkcs12 -export -inkey your_server.key -in your_server.crt -out server.p12
 ```
 
+### Install
+```xml
+<dependency>
+  <groupId>com.wuriyanto</groupId>
+  <artifactId>jvm-stash</artifactId>
+  <version>1.0</version>
+</dependency>
+```
+
 ### Usage
 
 #### Basic
